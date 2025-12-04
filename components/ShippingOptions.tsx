@@ -1,9 +1,8 @@
 "use client";
 
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import LoadingIcon from "./loadingIcon";
-import Image from "next/image";
 
 interface ServiceLevel {
   name: string;
@@ -24,7 +23,7 @@ interface ShippingOption {
   servicelevel: ServiceLevel;
 }
 
-interface ShippingLabel {
+export interface ShippingLabel {
   object_state: string;
   status: string;
   object_created: string;
@@ -60,7 +59,13 @@ interface ShippingLabel {
   };
 }
 
-const ShippingOptions: React.FC = () => {
+const ShippingOptions = ({ orderNumber }: { orderNumber: string }) => {
+  let labelCreationBody = {};
+  if (orderNumber) {
+    labelCreationBody = {
+      orderNumber,
+    };
+  }
   const [isLoading, setIsLoading] = useState(false);
   const [carrierData, setCarrierData] = useState<ShippingOption[]>([]);
   const [selectedCarrier, setSelectedCarrier] = useState<ShippingOption | null>(
@@ -72,6 +77,7 @@ const ShippingOptions: React.FC = () => {
   const [generatedLabel, setGeneratedLabel] = useState<
     ShippingLabel | undefined
   >();
+  const [modalError, setModalError] = useState("");
 
   // useEffect(() => {
   //   getShippingDetails();
@@ -85,7 +91,8 @@ const ShippingOptions: React.FC = () => {
     try {
       setIsLoading(true);
       const result = await axios.post(
-        "http://localhost:3000/api/shippo/shipment/get-shipping-rates"
+        "http://localhost:3000/api/shippo/shipment/get-shipping-rates",
+        labelCreationBody
       );
       setCarrierData(result?.data?.data);
     } catch (err) {
@@ -122,7 +129,9 @@ const ShippingOptions: React.FC = () => {
         console.log("AXIOS ERROR");
         console.log("Status:", err.response?.status);
         console.log("Body:", err.response?.data);
+        setModalError(err.response?.data?.error);
       } else {
+        setModalError(JSON.stringify(err) || "Error");
         console.log("Unknown error", err);
       }
     } finally {
@@ -217,6 +226,7 @@ const ShippingOptions: React.FC = () => {
         generateShippingLabel={generateShippingLabel}
         isGenerating={isGenerating}
         generatedLabel={generatedLabel}
+        error={modalError}
       />
     </div>
   );
@@ -231,6 +241,7 @@ const Modal = ({
   generateShippingLabel,
   isGenerating,
   generatedLabel,
+  error,
 }: {
   showModal: boolean;
   closeModal: () => void;
@@ -238,6 +249,7 @@ const Modal = ({
   generateShippingLabel: () => void;
   isGenerating: boolean;
   generatedLabel: ShippingLabel | undefined;
+  error: string;
 }) => {
   return (
     <div
@@ -299,7 +311,7 @@ const Modal = ({
             </button>
           )}
         </div>
-        {generatedLabel?.status === "SUCCESS" ? (
+        {generatedLabel?.status === "SUCCESS" && (
           <div className="space-y-1 mt-5">
             <p>
               <span className="text-gray-500">Created by: </span>
@@ -351,11 +363,8 @@ const Modal = ({
               ></iframe>
             </div>
           </div>
-        ) : (
-          <p className="mt-2 text-red-500 text-sm">
-            {generatedLabel?.messages?.[0]?.text}
-          </p>
         )}
+        {error && <p className="mt-2 text-red-500 text-sm">{error}</p>}
       </div>
     </div>
   );

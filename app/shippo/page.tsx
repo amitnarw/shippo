@@ -3,10 +3,21 @@
 import OrdersPage from "@/components/OrdersPage";
 import ShippingOptions from "@/components/ShippingOptions";
 import TrackingTimeline from "@/components/TrackingTimeline";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const App = () => {
+  const searchParams = useSearchParams();
+
   const [select, setSelect] = useState(0);
+  const [orderNumber, setOrderNumber] = useState("");
+
+  useEffect(() => {
+    const type = searchParams?.get("type");
+    const order_number = searchParams?.get("order_number");
+
+    if (type === "label" && order_number) setOrderNumber(order_number);
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto p-4">
@@ -23,7 +34,7 @@ const App = () => {
         </button>
         <button
           className={`p-2 px-4 rounded-xl ${
-            select === 0
+            select === 1
               ? "bg-blue-500 text-white"
               : "border border-blue-500 text-blue-500"
           }`}
@@ -33,7 +44,7 @@ const App = () => {
         </button>
         <button
           className={`p-2 px-4 rounded-xl ${
-            select === 1
+            select === 2
               ? "bg-blue-500 text-white"
               : "border border-blue-500 text-blue-500"
           }`}
@@ -45,7 +56,7 @@ const App = () => {
       {select === 0 ? (
         <OrdersPage />
       ) : select === 1 ? (
-        <ShippingOptions />
+        <ShippingOptions orderNumber={orderNumber} />
       ) : (
         <TrackingTimeline />
       )}

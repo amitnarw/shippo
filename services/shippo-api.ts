@@ -27,7 +27,7 @@ export async function createShipment(
 export async function createLabel(
   token: string,
   authType: AuthType,
-  rateId: string
+  rateId: string,
 ): Promise<AxiosResponse> {
   return axios.post(
     "https://api.goshippo.com/transactions/",
@@ -99,7 +99,6 @@ export async function trackShipment(
     }
   );
 }
-
 
 // Orders
 export async function fetchOrders(token: string, authType: AuthType) {

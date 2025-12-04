@@ -1,4 +1,5 @@
 import { createLabel } from "@/services/shippo-api";
+import axios from "axios";
 import { NextResponse } from "next/server";
 
 export const POST = async (req: Request) => {
@@ -35,12 +36,24 @@ export const POST = async (req: Request) => {
       { status: 200 }
     );
   } catch (err) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: err instanceof Error ? err?.message : JSON.stringify(err),
-      },
-      { status: 400 }
-    );
+    if (axios.isAxiosError(err)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Status: ${err.response?.status} Data: ${JSON.stringify(
+            err.response?.data
+          )}`,
+        },
+        { status: 400 }
+      );
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err instanceof Error ? err?.message : JSON.stringify(err),
+        },
+        { status: 400 }
+      );
+    }
   }
 };

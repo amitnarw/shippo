@@ -1,8 +1,10 @@
 import { createShipment } from "@/services/shippo-api";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const POST = async () => {
+export const POST = async (req: NextRequest) => {
   try {
+    const payload = await req.json();
+    const { orderNumber } = payload;
     const shippo_token = process.env.SHIPPO_API_KEY;
     if (!shippo_token) {
       return NextResponse.json({
@@ -50,15 +52,20 @@ export const POST = async () => {
       weight: 12,
       mass_unit: "lb",
     };
-
-    const response = await createShipment(shippo_token, "shippo", {
+    const shippingData: any = {
       address_from: addressFrom,
       address_to: addressTo,
       parcels: [parcel],
       object_purpose: "PURCHASE",
       async: false,
       shipment_date: new Date(),
-    });
+    };
+
+    if (orderNumber) {
+      shippingData.order = orderNumber;
+    }
+
+    const response = await createShipment(shippo_token, "shippo", shippingData);
     const result = await response?.data?.rates;
 
     return NextResponse.json({ success: true, data: result }, { status: 200 });
